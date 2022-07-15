@@ -6,5 +6,10 @@
         "User": "postgres",
         "Pass":"postgres",
         "DB": ["local"]
+    },
+    "Data":
+    {
+        "tableName": ["street_osm"],
+        "sarchField": "name"
     }
 }
