@@ -84,8 +84,13 @@ def main():
     print("{} ---- {}".format("thaw",output[t.search("thaw")]))
   
 if __name__ == '__main__':
-    for key in 'noha':
-        print(key)
+    x =dict()
+    print(x)
+    x['no']=1
+    if 'no' in x:
+        print('dfghl')
+
 #    main()
   
 # This code is contributed by Atul Kumar (www.facebook.com/atul.kr.007)
+

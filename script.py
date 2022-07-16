@@ -5,18 +5,18 @@ import os
 import psycopg2
 
 
-def readSetting():
+def getSetting():
     '''reading setting from json file'''
     file = 'setting.json'
     fPath = os.path.join(os.getcwd(),file)
     oFile = open(fPath)
     readf = json.load(oFile)
+    oFile.close()
     return readf
 
-
-def dbConnection():
+def getDbConnection(settings):
     '''connection to db data source'''
-    dbconn = readSetting()['DataBase']
+    dbconn = settings['DataBase']
 
     try:
         conn = psycopg2.connect(
@@ -28,39 +28,23 @@ def dbConnection():
         
         if conn != None:
             curs = conn.cursor()
-            print("DB connected Sucessfully")
             return curs
 
     except (Exception, Error) as error:
         print("Postgres Error: ", error)
 
 
-def getData():
+def getData(settings, cursor):
     '''return data from column'''
-    tableName = readSetting()['Data']['tableName'][0]
-    searchField = readSetting()['Data']['sarchField']
-    connection = dbConnection()
-
-#    query = "SELECT * FROM "
-#    query += "{};".format(tableName)
-#    connection.execute(query)
-#    Data = connection.fetchall()
-#
-#    for d in Data:
-#        '''list column data by column index'''
-#        print (d[0])
-
-    #---------------#
+    tableName = settings['Data']['tableName'][0]
+    searchField = settings['Data']['sarchField']
 
     queryStr = "SELECT {} FROM {} where {} is not null".format(searchField, tableName,searchField)
-    connection.execute(queryStr)
-    searchData = connection.fetchall()
+    cursor.execute(queryStr)
+    searchData = cursor.fetchall()
     return [ d[0] for d in searchData]
-    #for d in searchData:
-    #    data = d[0]
-    #    print(data)
-#    for sd in searchData:
-#        print(sd)
+
+    
 def creatListResultsFile():
     data = getData()
     filename = 'noha.text'
@@ -73,34 +57,57 @@ def creatListResultsFile():
             return 'file',filename, 'is not exists successfuly'
 
 
-class TrieNode:
-    def __init__(self, text = ''):
-        self.text = text
-        self.children = dict()
+class Node:
+    def __init__(self,word = ''):
+        self.word=word
+        self.children=dict()
+        self.endOfTxt = False
 
-class PrefixTree:
+class Tree:
     def __init__(self):
-        self.root = TrieNode()
-
-    def insert(self, word):
+        self.root = Node()
+    
+    def insert(self,word):
         current = self.root
+        for i, char in enumerate(word): #noha
+            #split 
+            splitWord = word[0:i+1]
+            if splitWord not in current.children: #check kol char in noha not exist in children of current node
+                #insert char to child of node
+                current.children[splitWord] = Node(splitWord)
+
+                #print(current.children)     
+            #update el current node
+            current = current.children[splitWord]
+        current.endOfTxt = True
+
+
+    def search(self,word):
+        current = self.root
+        #split
         for i, char in enumerate(word):
-            if char not in current.children:
-                prefix = word[0:i+1]
-                current.children[char] = TrieNode(prefix)
-            current = current.children[char]
+            splitWord = word[0:i+1]
+        #access childrens and check if char exist
+            if splitWord in current.children:
+               current = current.children[splitWord]
 
-    def find(self, word):
-        current = self.root
-        for char in word:
-            if char not in current.children:
-                return None
-            current = current.children[char]
-        return current
+            else:
+                print(word, 'IS not exist')
+                return False
+
+        if current.endOfTxt :
+            return current.word
+        else:
+            print ('***** Suggestions******')
+            return [key for key in current.children]
 
 
-Data = ['Ring Road']
-node = PrefixTree()
-for i in Data :
-    node.insert(i)
-print(node.find('x'))
+
+if __name__ == '__main__':
+    settings = getSetting()
+    cursor = getDbConnection(settings)
+    data = getData(settings, cursor)
+    t = Tree()
+    for d in data:
+        t.insert(d)
+    print(t.search('Ra'))
