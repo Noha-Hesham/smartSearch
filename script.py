@@ -6,7 +6,12 @@ import psycopg2
 
 
 def getSetting():
-    '''reading setting from json file'''
+    '''
+    Info: reading setting from json file
+
+    input: No input
+    Output: JSON
+    '''
     file = 'setting.json'
     fPath = os.path.join(os.getcwd(),file)
     oFile = open(fPath)
